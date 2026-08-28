@@ -1,69 +1,279 @@
-import Image from "next/image";
+"use client";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
+
+import SplashScreen from "@/components/splash/SplashScreen";
+import SpaceBackground from "@/components/background/SpaceBackground";
+import BottomNav, { type SectionId } from "@/components/navigation/BottomNav";
+
+import AboutSection from "@/components/sections/AboutSection";
+import ProjectsSection from "@/components/sections/ProjectsSection";
+import ContactSection from "@/components/sections/ContactSection";
+import CatalogSection from "@/components/sections/CatalogSection";
+
+const sections: SectionId[] = ["about", "projects", "contact", "catalog"];
 
 export default function Home() {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const [activeSection, setActiveSection] = useState<SectionId>("about");
+
+  const [appVisible, setAppVisible] = useState(false);
+
+  /*
+   * ========================================
+   * SPLASH → APPLICATION
+   * ========================================
+   */
+
+  useEffect(() => {
+    const handleSplashComplete = () => {
+      setAppVisible(true);
+    };
+
+    window.addEventListener("angkasa:splash-complete", handleSplashComplete);
+
+    return () => {
+      window.removeEventListener(
+        "angkasa:splash-complete",
+        handleSplashComplete,
+      );
+    };
+  }, []);
+
+  /*
+   * ========================================
+   * NAVIGATION
+   * ========================================
+   */
+
+  const navigateTo = useCallback((section: SectionId) => {
+    const element = document.getElementById(section);
+
+    const container = containerRef.current;
+
+    if (!element || !container) return;
+
+    container.scrollTo({
+      left: element.offsetLeft,
+      behavior: "smooth",
+    });
+  }, []);
+
+  /*
+   * ========================================
+   * ACTIVE SECTION
+   * ========================================
+   */
+
+  useEffect(() => {
+    if (!appVisible) return;
+
+    const container = containerRef.current;
+
+    if (!container) return;
+
+    const elements = sections
+      .map((id) => document.getElementById(id))
+      .filter(Boolean) as HTMLElement[];
+
+    if (!elements.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+
+        if (!visible?.target.id) return;
+
+        setActiveSection(visible.target.id as SectionId);
+      },
+      {
+        root: container,
+        threshold: 0.6,
+      },
+    );
+
+    elements.forEach((element) => {
+      observer.observe(element);
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [appVisible]);
+
+  /*
+   * ========================================
+   * MOUSE WHEEL → HORIZONTAL SCROLL
+   * ========================================
+   *
+   * Wheel atas    → kiri
+   * Wheel bawah   → kanan
+   *
+   * Mobile tidak terpengaruh karena
+   * touch swipe tetap ditangani browser.
+   */
+
+  useEffect(() => {
+    if (!appVisible) return;
+
+    const container = containerRef.current;
+
+    if (!container) return;
+
+    const handleWheel = (event: WheelEvent) => {
+      /*
+       * Kalau gesture sudah horizontal,
+       * gunakan deltaX.
+       *
+       * Kalau mouse wheel biasa,
+       * gunakan deltaY sebagai horizontal.
+       */
+      const delta =
+        Math.abs(event.deltaX) > Math.abs(event.deltaY)
+          ? event.deltaX
+          : event.deltaY;
+
+      if (delta === 0) return;
+
+      event.preventDefault();
+
+      container.scrollBy({
+        left: delta,
+        behavior: "auto",
+      });
+    };
+
+    container.addEventListener("wheel", handleWheel, {
+      passive: false,
+    });
+
+    return () => {
+      container.removeEventListener("wheel", handleWheel);
+    };
+  }, [appVisible]);
+
+  /*
+   * ========================================
+   * RENDER
+   * ========================================
+   */
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main
+      className="
+        relative
+        h-dvh
+        overflow-hidden
+      "
+    >
+      {/* ==================================
+          SPLASH SCREEN
+      =================================== */}
+
+      <SplashScreen />
+
+      {/* ==================================
+          APPLICATION
+      =================================== */}
+
+      <motion.div
+        initial={{
+          opacity: 0,
+          scale: 0.985,
+          y: 12,
+        }}
+        animate={
+          appVisible
+            ? {
+                opacity: 1,
+                scale: 1,
+                y: 0,
+              }
+            : {
+                opacity: 0,
+                scale: 0.985,
+                y: 12,
+              }
+        }
+        transition={{
+          duration: 0.8,
+          ease: [0.22, 1, 0.36, 1],
+        }}
+        className="
+          absolute
+          inset-0
+          overflow-hidden
+        "
+        style={{
+          pointerEvents: appVisible ? "auto" : "none",
+        }}
+      >
+        {/* Cosmic background */}
+        <SpaceBackground />
+
+        {/* ==================================
+            HORIZONTAL PAGE CONTAINER
+        =================================== */}
+
+        <div
+          ref={containerRef}
+          className="
+            relative
+            z-10
+            flex
+            h-full
+            w-full
+
+            snap-x
+            snap-mandatory
+
+            overflow-x-auto
+            overflow-y-hidden
+
+            scroll-smooth
+            overscroll-x-contain
+
+            touch-pan-x
+
+            [scrollbar-width:none]
+            [&::-webkit-scrollbar]:hidden
+          "
+        >
+          {/* ==================================
+              ABOUT
+          =================================== */}
+
+          <AboutSection />
+
+          {/* ==================================
+              PROJECTS
+          =================================== */}
+
+          <ProjectsSection />
+
+          {/* ==================================
+              CONTACT
+          =================================== */}
+
+          <ContactSection />
+
+          {/* ==================================
+              CATALOG
+          =================================== */}
+
+          <CatalogSection />
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+
+        {/* ==================================
+            BOTTOM DOCK
+        =================================== */}
+
+        <BottomNav activeSection={activeSection} onNavigate={navigateTo} />
+      </motion.div>
+    </main>
   );
 }
