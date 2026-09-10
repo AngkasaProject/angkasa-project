@@ -31,7 +31,7 @@ const products: Product[] = [
     category: "Fashion",
     seller: "Angkasa Pick",
     price: "Rp89.000",
-    image: "/catalog/placeholder-1.jpg",
+    image: "/catalog/placehold.png",
     url: "#",
     featured: true,
   },
@@ -41,7 +41,7 @@ const products: Product[] = [
     category: "Home",
     seller: "Angkasa Pick",
     price: "Rp129.000",
-    image: "/catalog/placeholder-2.jpg",
+    image: "/catalog/placehold.png",
     url: "#",
   },
   {
@@ -50,7 +50,7 @@ const products: Product[] = [
     category: "Fashion",
     seller: "Angkasa Pick",
     price: "Rp149.000",
-    image: "/catalog/placeholder-3.jpg",
+    image: "/catalog/placehold.png",
     url: "#",
   },
   {
@@ -59,7 +59,7 @@ const products: Product[] = [
     category: "Tech",
     seller: "Angkasa Pick",
     price: "Rp199.000",
-    image: "/catalog/placeholder-4.jpg",
+    image: "/catalog/placehold.png",
     url: "#",
   },
 ];
